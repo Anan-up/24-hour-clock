@@ -52,3 +52,5 @@
 - Minimalist, rounded, frosted-glass feel (`radial-gradient` background, semi-transparent card background).
 - Hands distinguished by color: hour hand dark, minute hand gray, second hand red.
 - Subtle interaction feedback (color transitions, slider animation).
+
+![project-screenshot](24-hour-clock.png)
