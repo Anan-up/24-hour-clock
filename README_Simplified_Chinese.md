@@ -1,3 +1,5 @@
+[English](https://github.com/Anan-up/24-hour-clock/blob/main/README.md) | [简中](https://github.com/Anan-up/24-hour-clock/blob/main/README_Simplified_Chinese.md) | [文言](https://github.com/Anan-up/24-hour-clock/blob/main/README_Classical_Chinese.md)
+
 ## 一、整体功能
 - **双时钟显示**：同时展示模拟指针时钟（表盘）和数字时钟（时分秒）。
 - **时间制式切换**：可在12小时制和24小时制之间切换，切换时表盘数字（1~12或1~24）和数字时钟显示同步变化。
