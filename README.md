@@ -1,3 +1,5 @@
+[English](https://github.com/Anan-up/24-hour-clock/blob/main/README.md) | [简中](https://github.com/Anan-up/24-hour-clock/blob/main/README_Simplified_Chinese.md) | [文言](https://github.com/Anan-up/24-hour-clock/blob/main/README_Classical_Chinese.md)
+
 ## I. Overall Features
 - **Dual clock display**: Shows both an analog pointer clock (dial) and a digital clock (hours, minutes, seconds) simultaneously.
 - **Time format switching**: Switch between 12-hour and 24-hour formats. When switching, the dial numbers (1–12 or 1–24) and the digital clock display update synchronously.
