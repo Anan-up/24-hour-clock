@@ -54,3 +54,7 @@
 - Subtle interaction feedback (color transitions, slider animation).
 
 ![project-screenshot](24-hour-clock.png)
+
+## License
+
+[MIT](LICENSE)
