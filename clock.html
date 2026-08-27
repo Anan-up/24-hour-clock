@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网页时钟 · 12/24 小时切换</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #ffffff;
+    --text: #1a1f3a;
+    --muted: #6b7299;
+    --card: rgba(0, 0, 0, 0.03);
+    --ring: rgba(0, 0, 0, 0.08);
+    --seg1: #e3f0ff;
+    --seg2: #cfe3ff;
+    --seg-ink: #1a3a6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 800px at 70% -10%, var(--bg2), var(--bg));
+    color: var(--text);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 28px;
+    transition: background .4s ease, color .4s ease;
+  }
+  .title { font-size: 14px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; }
+
+  .clock-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+  }
+
+  /* 模拟时钟 */
+  .analog {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, #ffffff, #f4f6fb);
+    border: 1px solid rgba(0, 0, 0, .08);
+    box-shadow:
+      0 12px 34px rgba(0, 0, 0, .14),
+      inset 0 2px 6px rgba(255, 255, 255, .9),
+      inset 0 -6px 16px rgba(0, 0, 0, .05);
+    position: relative;
+    flex-shrink: 0;
+  }
+  /* 内装饰细环 */
+  .analog::after {
+    content: "";
+    position: absolute;
+    inset: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, .05);
+    pointer-events: none;
+  }
+  .analog .tick {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1.5px;
+    height: 6px;
+    background: rgba(0, 0, 0, .22);
+    transform-origin: 50% 0;
+    border-radius: 2px;
+    z-index: 1;
+  }
+  .analog .tick.major { height: 13px; width: 3px; background: #2b2f44; }
+  .analog .num {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 18px;
+    color: #2b2f44;
+    transform: translate(-50%, -50%);
+    font-weight: 600;
+    z-index: 2;
+  }
+  .analog .num.small { font-size: 13px; color: #6b7299; }
+  .hand {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: 50% 100%;
+    border-radius: 6px;
+  }
+  .hand.hour {
+    width: 9px; height: 74px; margin-left: -4.5px; margin-top: -74px;
+    background: linear-gradient(90deg, #3a3f55, #1c2030);
+    box-shadow: 2px 3px 6px rgba(0, 0, 0, .25);
+    z-index: 3;
+  }
+  .hand.minute {
+    width: 5px; height: 104px; margin-left: -2.5px; margin-top: -104px;
+    background: linear-gradient(90deg, #6b7184, #3a3f55);
+    box-shadow: 2px 3px 6px rgba(0, 0, 0, .2);
+    z-index: 4;
+  }
+  .hand.second {
+    width: 2px; height: 140px; margin-left: -1px; margin-top: -122px;
+    background: #ff6b6b;
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, .2);
+    transform-origin: 50% 87.5%;
+    z-index: 5;
+  }
+  /* 秒针尾端配重小圆（位于中心下方） */
+  .hand.second::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: 0;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    transform: translate(-50%, 55%);
+    box-shadow: 1px 2px 3px rgba(0, 0, 0, .2);
+  }
+  .analog .center {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 16px; height: 16px;
+    background: radial-gradient(circle at 35% 35%, #4a4f66, #1c2030);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+    z-index: 6;
+  }
+  .analog .center::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    transform: translate(-50%, -50%);
+  }
+
+  /* 数字时钟 */
+  .digital {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .time {
+    font-variant-numeric: tabular-nums;
+    font-size: 84px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, .14);
+  }
+  .time .sep { animation: blink 2s steps(2, start) infinite; color: var(--muted); }
+  @keyframes blink { 50% { opacity: .25; } }
+  .ampm {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-left: 6px;
+    min-width: 64px;
+  }
+  .ampm.hidden { visibility: hidden; }
+  .date {
+    font-size: 18px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .zone {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: .5px;
+  }
+
+  /* 控制条 */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+  }
+  .seg {
+    position: relative;
+    display: inline-flex;
+    background: var(--card);
+    border: 1px solid var(--ring);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .seg button {
+    position: relative;
+    z-index: 1;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color .2s;
+    font-weight: 600;
+  }
+  .seg button.active { color: var(--seg-ink); }
+  /* 滑动高亮块：切换时平滑滑动到目标按钮 */
+  .seg .thumb {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: 0;
+    background: linear-gradient(120deg, var(--seg1), var(--seg2));
+    border-radius: 999px;
+    z-index: 0;
+    transition: left .3s ease, width .3s ease;
+  }
+  .btn {
+    border: 1px solid var(--ring);
+    background: var(--card);
+    color: var(--text);
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: .2s;
+    font-weight: 600;
+  }
+  .btn:hover { border-color: var(--text); color: var(--text); }
+</style>
+</head>
+<body>
+  <div class="title">WEB CLOCK</div>
+
+  <div class="clock-wrap">
+    <!-- 模拟时钟 -->
+    <div class="analog" id="analog">
+      <div class="center"></div>
+      <div class="hand hour" id="hourHand"></div>
+      <div class="hand minute" id="minHand"></div>
+      <div class="hand second" id="secHand"></div>
+    </div>
+
+    <!-- 数字时钟 -->
+    <div class="digital">
+      <div class="time" id="time">
+        <span id="hh">00</span><span class="sep">:</span><span id="mm">00</span><span class="sep">:</span><span id="ss">00</span>
+        <span class="ampm hidden" id="ampm">AM</span>
+      </div>
+      <div class="date" id="date">—</div>
+      <div class="zone" id="zone">—</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="fmtSeg">
+      <span class="thumb"></span>
+      <button data-fmt="24" class="active">24 小时</button>
+      <button data-fmt="12">12 小时</button>
+    </div>
+    <button class="btn" id="fullBtn">⛶ 全屏</button>
+  </div>
+
+<script>
+(function () {
+  var fmt = 24; // 默认 24 小时制
+  var body = document.body;
+  var analog = document.getElementById('analog');
+  var hourHand = document.getElementById('hourHand');
+  var minHand = document.getElementById('minHand');
+  var secHand = document.getElementById('secHand');
+  var hhEl = document.getElementById('hh');
+  var mmEl = document.getElementById('mm');
+  var ssEl = document.getElementById('ss');
+  var ampmEl = document.getElementById('ampm');
+  var dateEl = document.getElementById('date');
+  var zoneEl = document.getElementById('zone');
+
+  // 生成分钟刻度（始终 60 格，与 12/24 模式无关）
+  (function buildTicks() {
+    for (var i = 0; i < 60; i++) {
+      var t = document.createElement('div');
+      t.className = 'tick' + (i % 5 === 0 ? ' major' : '');
+      t.style.transform = 'translate(-50%, 0) rotate(' + (i * 6) + 'deg) translateY(122px)';
+      analog.appendChild(t);
+    }
+  })();
+
+  // 时钟数字层：根据格式动态生成 1~12 或 1~24
+  var numLayer = document.createElement('div');
+  numLayer.id = 'numLayer';
+  analog.appendChild(numLayer);
+  function setDialNumbers(format) {
+    numLayer.innerHTML = '';
+    var count = format === 24 ? 24 : 12;
+    var r = format === 24 ? 108 : 100;
+    for (var n = 1; n <= count; n++) {
+      var angle = (n / count) * Math.PI * 2;
+      var x = Math.sin(angle) * r;
+      var y = -Math.cos(angle) * r;
+      var num = document.createElement('div');
+      num.className = 'num' + (format === 24 ? ' small' : '');
+      num.textContent = n;
+      num.style.left = (150 + x) + 'px';
+      num.style.top = (150 + y) + 'px';
+      numLayer.appendChild(num);
+    }
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function tick() {
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var s = now.getSeconds();
+
+    // 数字时钟
+    if (fmt === 12) {
+      var h12 = h % 12;
+      if (h12 === 0) h12 = 12;
+      hhEl.textContent = pad(h12);
+      ampmEl.textContent = h < 12 ? 'AM' : 'PM';
+      ampmEl.classList.remove('hidden');
+    } else {
+      hhEl.textContent = pad(h);
+      ampmEl.classList.add('hidden');
+    }
+    mmEl.textContent = pad(m);
+    ssEl.textContent = pad(s);
+
+    // 日期
+    var days = ['周日','周一','周二','周三','周四','周五','周六'];
+    dateEl.textContent = now.getFullYear() + ' 年 ' + (now.getMonth()+1) + ' 月 ' + now.getDate() + ' 日 · ' + days[now.getDay()];
+
+    // 时区
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      var off = -now.getTimezoneOffset() / 60;
+      zoneEl.textContent = '时区 ' + tz + ' (UTC' + (off >= 0 ? '+' + off : off) + ')';
+    } catch (e) { zoneEl.textContent = ''; }
+
+    // 模拟指针（使用毫秒平滑）。时针走位随表盘模式匹配：
+    // 12 制一圈 12 小时（每小时 30°），24 制一圈 24 小时（每小时 15°）。
+    var ms = now.getMilliseconds();
+    var secAngle = (s + ms / 1000) * 6;
+    var minAngle = (m + s / 60) * 6;
+    var hourAngle = fmt === 24 ? ((h % 24) + m / 60) * 15 : ((h % 12) + m / 60) * 30;
+    secHand.style.transform = 'rotate(' + secAngle + 'deg)';
+    minHand.style.transform = 'rotate(' + minAngle + 'deg)';
+    hourHand.style.transform = 'rotate(' + hourAngle + 'deg)';
+  }
+
+  setDialNumbers(fmt); // 初始化表盘数字（默认 24 小时制 1~24）
+  tick();
+  setInterval(tick, 50); // 50ms 让秒针更平滑
+
+  // 12/24 切换（滑块平滑滑动到目标按钮）
+  var fmtSeg = document.getElementById('fmtSeg');
+  var thumb = fmtSeg.querySelector('.thumb');
+  function moveThumb(btn) {
+    thumb.style.left = btn.offsetLeft + 'px';
+    thumb.style.width = btn.offsetWidth + 'px';
+  }
+  moveThumb(fmtSeg.querySelector('button.active')); // 初始化滑块位置
+  window.addEventListener('resize', function () {
+    moveThumb(fmtSeg.querySelector('button.active'));
+  });
+  window.addEventListener('load', function () {
+    moveThumb(fmtSeg.querySelector('button.active'));
+  });
+  fmtSeg.addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    fmt = parseInt(btn.dataset.fmt, 10);
+    var btns = this.querySelectorAll('button');
+    btns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+    moveThumb(btn);
+    setDialNumbers(fmt);
+    tick();
+  });
+
+  // 全屏
+  document.getElementById('fullBtn').addEventListener('click', function () {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen && document.exitFullscreen();
+    }
+  });
+})();
+</script>
+</body>
+</html>
