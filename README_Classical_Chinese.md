@@ -1,4 +1,4 @@
-[English](https://github.com/Anan-up/24-hour-clock/blob/main/README.md) | [简体中文](https://github.com/Anan-up/24-hour-clock/blob/main/README_Simplified_Chinese.md) | [繁体中文](https://github.com/Anan-up/24-hour-clock/blob/main/README_Classical_Chinese.md)
+[English](README.md) | [简体中文](README_Simplified_Chinese.md) | [繁體中文](README_Classical_Chinese.md)
 
 ## 一、總體功用
 - **雙鐘並陳**：模擬指針之鐘（錶盤）與數字之鐘（時分秒）同時並見。
